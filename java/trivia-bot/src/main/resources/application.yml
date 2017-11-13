@@ -1,0 +1,9 @@
+trivia.questions:
+- question: Who Wrote this code?
+  answer: Timo
+- question: What is the square root of pi ?
+  answer: 42
+- question: Priates VS Ninjas, Who Would win ?
+  answer: ninjas
+
+server.port: 8081
