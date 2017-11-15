@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+    <title>IT Days 2017 Reactive Chat</title>
+
+    <!-- CSS  -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Compiled and minified CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
+    <!--  Scripts-->
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <!-- Compiled and minified JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
+    <style>
+        html, body {
+            height: 100%;
+        }
+
+        #register, #chat {
+            margin: 0;
+            height: calc(100% - 80px);
+        }
+
+        #chat-area {
+            padding: 16px;
+            overflow: auto;
+            height: calc(100% - 124px);
+        }
+
+        .message-row {
+            margin-bottom: 0;
+        }
+
+    </style>
+</head>
+<body>
+<nav class="light-blue lighten-1" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" href="#" class="brand-logo">Reactive Chat</a>
+        <ul class="right hide-on-med-and-down">
+            <li><a href="#" onclick="leaveChat()">Leave Chat</a></li>
+        </ul>
+
+        <ul id="nav-mobile" class="side-nav" style="transform: translateX(-100%);">
+            <li><a href="#" onclick="leaveChat()">Leave Chat</a></li>
+        </ul>
+        <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+<div class="section" id="register">
+    <div class="container">
+        <br><br>
+        <h1 class="header center orange-text">Welcome to Reactive Chat</h1>
+        <div class="row center">
+            <h5 class="header col s12 light">To get started, enter your name</h5>
+        </div>
+        <div class="row">
+            <form class="col s12" onsubmit="joinChat()" action="#">
+                <div class="row center">
+                    <div class="input-field col s4 offset-s4">
+                        <input id="name" type="text" class="validate" required>
+                        <label for="name">Name</label>
+                    </div>
+                </div>
+                <div class="row center">
+                    <button class="btn-large waves-effect waves-light orange">Join chat</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<div class="card" id="chat">
+
+    <div class="card-content" id="chat-area">
+    </div>
+
+    <div class="card-action message-row">
+        <form class="col s12" onsubmit="sendMessage()" action="#">
+            <div class="row center">
+                <div class="input-field col s8 m10 l10">
+                    <input id="message" type="text" class="validate" required>
+                    <label for="message">Message ...</label>
+                </div>
+                <div class="col s4 m2 l2">
+                    <button type="submit"
+                            class="btn-large waves-effect waves-light orange">Send
+                    </button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+
+</div>
+</body>
+
+<script>
+
+    var source;
+
+    function leaveChat() {
+        if (source) {
+            try {
+                source.close();
+            } catch (ex) {
+                console.log('failed to close source', ex)
+            }
+            sessionStorage.removeItem('username');
+            $('#register').show();
+            $('#chat').hide();
+        }
+    }
+
+    function sendMessage(e) {
+        const message = $('#message').val();
+        const name = sessionStorage.getItem('username');
+        $.post("/chat", JSON.stringify({from: name, value: message})).done(function (data) {
+            $('#message').val("");
+            console.log(source.readyState);
+        });
+    }
+
+    function subscribeToChat() {
+        source = new EventSource("/chat");
+        source.onmessage = function (event) {
+            const data = JSON.parse(event.data);
+            $('#chat-area').append(" <div class=\"col s12\"><strong>" + data.from + ": </strong>" + data.value + "</div>");
+            $("#chat-area").animate({scrollTop: $('#chat-area').prop("scrollHeight")}, 100);
+        };
+    }
+
+    function joinChat() {
+        const name = $('#name').val();
+        sessionStorage.setItem('username', name);
+        $('#register').hide();
+        $('#chat').show();
+        subscribeToChat();
+    }
+
+    (function () {
+        $.ajaxSetup({
+            contentType: "application/json; charset=utf-8"
+        });
+
+        if (sessionStorage.getItem('username')) {
+            $('#register').hide();
+            $('#chat').show();
+            subscribeToChat();
+        } else {
+            $('#register').show();
+            $('#chat').hide();
+        }
+    })();
+</script>
+
+</html>
